@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django import forms
+from django.utils import timezone
 
 User = get_user_model()
 TEXT_LENGTH = 256
@@ -46,12 +48,11 @@ class Location(BaseModel):
 
 class Post(BaseModel):
     title = models.CharField(max_length=TEXT_LENGTH, verbose_name='Заголовок')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+    is_published = models.BooleanField(default=True, verbose_name="Published")
     text = models.TextField(verbose_name='Текст')
-    pub_date = models.DateTimeField(
-        verbose_name='Дата и время публикации',
-        help_text='Если установить дату и время в будущем — '
-                  'можно делать отложенные публикации.'
-    )
+    pub_date = models.DateTimeField(default=timezone.now, verbose_name="Дата публикации")
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -72,8 +73,23 @@ class Post(BaseModel):
         verbose_name='Категория',
         related_name='posts'
     )
+    image = models.ImageField(
+        upload_to='post_images/', 
+        null=True, 
+        blank=True, 
+        verbose_name='Изображение'
+    )
+    def __str__(self):
+        return self.title
+    
 
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         ordering = ['-pub_date']
+
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'text', 'image', 'is_published']
